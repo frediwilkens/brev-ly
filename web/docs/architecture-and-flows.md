@@ -56,8 +56,8 @@ O banco de dados do backend é a fonte de verdade. A página inicial mantém a l
 1. A pessoa digita a URL original e o slug no cartão “Novo link”.
 2. React Hook Form acompanha os valores no modo `onChange`; `register()` conecta os campos ao estado interno do formulário.
 3. `zodResolver` executa o schema Zod em cada alteração e disponibiliza erros/validade pelo `formState`.
-4. URL original: é aparada; se não começar com `http://` ou `https://`, acrescenta-se `https://`; depois `z.url()` verifica a URL resultante.
-5. Slug: é aparado, convertido para minúsculas, exige 1–32 caracteres e aceita somente letras minúsculas e números (`^[a-z0-9]+$`), de acordo com o contrato atual do backend.
+4. URL original: é aparada; se não começar com `http://` ou `https://`, acrescenta-se `https://`; depois `z.url()` verifica a URL resultante, sem restrição adicional de protocolo, domínio ou tamanho; o backend também usa `z.url()`.
+5. Slug: é aparado, convertido para minúsculas, exige 1–32 caracteres e aceita letras minúsculas, números e hífens simples entre eles, sem hífen no início ou no fim (`^[a-z0-9]+(?:-[a-z0-9]+)*$`; ex.: `google-1`), de acordo com o contrato do backend, que também limita a 32 caracteres.
 6. O prefixo `brev.ly/` é texto visual no componente do input; o valor registrado guarda apenas o slug.
 7. O botão “Salvar link” fica fora do elemento `<form>` e é associado a ele com `form="new-short-url"`. Fica desativado quando `isValid` é falso ou o formulário está enviando.
 8. `POST /shortUrl` cria o link no backend. A API é a autoridade para unicidade; HTTP 409 é mostrado junto ao campo de slug.
@@ -68,13 +68,13 @@ Validações que ainda são importantes em um backend: reservar slugs de sistema
 ## 6. Lista, ações e CSV
 
 - Sem links, o painel mostra a ilustração e a mensagem do estado vazio; o botão CSV permanece desativado.
-- Com links, cada linha mostra slug, URL original sem o esquema visual, `accessCount` do servidor e ações. **Limite atual do contrato:** o schema de resposta de `GET /shortUrls` no backend não inclui `accessCount`, embora a função de banco o selecione. Por isso, o parser do front-end aplica default zero até o schema de resposta do servidor ser ampliado.
+- Com links, cada linha mostra slug, URL original sem o esquema visual, `accessCount` do servidor e ações. **Contrato atual:** o schema de resposta de `GET /shortUrls` no backend inclui `accessCount`, que o front-end exibe diretamente.
 - `MyLinks` decide qual conteúdo mostrar e mantém a responsabilidade pelo download CSV; `EmptyLinksState` contém somente a apresentação do estado vazio.
 - Cada `ShortLinkListItem` apresenta um link e contém seu estado transitório de cópia; os botões Copy/Trash usam o componente comum `IconActionButton`.
-- Copiar grava `VITE_FRONTEND_URL/slug` na área de transferência pelo Clipboard API; se a variável não estiver definida, usa a origem atual do browser como default. A ação anuncia o estado pelo nome acessível do botão. O navegador pode exigir contexto seguro/permissão.
+- Copiar grava `VITE_FRONTEND_URL/slug` na área de transferência pelo Clipboard API; se a variável não estiver definida, usa a origem atual do browser como default. Quando a cópia tem sucesso, um popup fixo "Link copiado!" (`role="status"`) aparece por 1,5 s na parte inferior da tela. A ação anuncia o estado pelo nome acessível do botão. Se o Clipboard API falhar (por exemplo, fora de contexto seguro), usa-se um fallback com `document.execCommand("copy")`; se ambos falharem, nada é sinalizado como copiado.
 - Excluir chama `DELETE /shortUrl/:shortCode`; a linha só é removida após sucesso do servidor. Em erro, mantém-se na lista e a interface informa a falha.
-- CSV cria cabeçalho e uma linha por link, escapa aspas duplicando-as, cria um `Blob` UTF-8 e inicia o download `brevly-links.csv`. A URL de objeto é revogada após iniciar o download.
-- A exportação cria o CSV no browser com os links retornados pela API; as URLs absolutas usam `VITE_FRONTEND_URL`, com fallback à origem atual. O backend ainda não oferece endpoint de relatório CSV.
+- Baixar CSV chama `POST /shortUrls/export`. O backend gera o CSV (URL original, URL encurtada como o `shortCode` salvo no banco, acessos e data de criação), grava no Cloudflare R2 com nome aleatório (UUID) e retorna `reportUrl`, a URL pública/CDN do arquivo. O front inicia o download dessa URL; durante a chamada o botão fica desativado com ícone de carregamento e falhas mostram uma mensagem de erro.
+- O CSV não é mais gerado no browser. O bucket precisa ter acesso público (ou domínio customizado) configurado em `CLOUDFLARE_PUBLIC_URL` no backend.
 
 ## 7. Fluxo de slug, redirecionamento e 404
 
@@ -137,11 +137,11 @@ Em produção, o host do front-end deverá servir o fallback SPA ao abrir direta
 - **ESLint**, **typescript-eslint**, **eslint-plugin-react-hooks**, **eslint-plugin-react-refresh** e **@eslint/js**: dependências para lint, configuração ainda ausente no estado atual do projeto.
 - **`@types/react`, `@types/react-dom`, `@types/node`**: declarações de tipos.
 
-O roteamento usa React Router DOM; as chamadas HTTP usam Fetch API sem biblioteca de cliente. O backend Fastify fornece persistência. Phosphor Icons fornece iconografia, e APIs do navegador são usadas para clipboard, temporizador e geração de CSV.
+O roteamento usa React Router DOM; as chamadas HTTP usam Fetch API sem biblioteca de cliente. O backend Fastify fornece persistência. Phosphor Icons fornece iconografia, e APIs do navegador são usadas para clipboard e temporizador.
 
 ## 10. Limites e evolução sugerida
 
-Próximos passos: adicionar testes de integração UI/API, considerar endpoint de exportação CSV, restringir CORS às origens configuradas antes do deploy e configurar ESLint antes de tratar `pnpm lint` como verificação ativa.
+Próximos passos: adicionar testes de integração UI/API, restringir CORS às origens configuradas antes do deploy e configurar ESLint antes de tratar `pnpm lint` como verificação ativa.
 
 ## 11. Revisão contra os requisitos do front-end
 
@@ -156,8 +156,8 @@ Esta revisão reflete a integração atual com o backend e destaca pendências c
 | Deletar link | Implementado | Envia `DELETE /shortUrl/:shortCode`; item é removido somente após sucesso. |
 | Resolver URL original a partir do slug | Implementado | `GET /shortUrls/:shortCode` busca na API e trata 404. |
 | Listar links | Implementado | Busca todas as páginas de `GET /shortUrls` até `totalCount`. |
-| Incrementar acessos | Implementado na API | `GET /:shortCode` incrementa no servidor e redireciona; a resposta atual da listagem omite o contador e a interface exibe fallback zero até corrigir o schema. |
-| Baixar CSV | Implementado no front-end | Gera CSV no browser a partir dos links carregados; backend ainda não oferece endpoint de relatório. |
+| Incrementar acessos | Implementado na API | `GET /:shortCode` incrementa no servidor e redireciona; a listagem retorna o contador. |
+| Baixar CSV | Implementado | O backend gera o CSV, envia ao Cloudflare R2 e retorna a URL pública; o front baixa por essa URL. |
 | Corresponder ao Figma | Parcial | As telas e os estados principais foram montados; a arte 404 desktop atualmente é forçada a dimensões diferentes no mobile com `object-fill`, podendo distorcer a proporção do asset. Fazer comparação visual final nos oito frames. |
 | UX com empty/loading/bloqueio de ações | Parcial | Loading, erros/retry, conflito 409 e disabled durante mutações estão tratados; falha no Clipboard API ainda não mostra mensagem própria. |
 | Responsividade desktop e mobile | Parcial/implementada | Breakpoints mobile-first e layout empilhado/horizontal existem; validar os oito frames e larguras intermediárias após assets/API. |
@@ -165,11 +165,11 @@ Esta revisão reflete a integração atual com o backend e destaca pendências c
 
 ### Pontos restantes de integração
 
-- O schema de resposta de `GET /shortUrls` no backend omite `accessCount`, embora a consulta ao banco selecione esse campo. O front-end usa zero como fallback até o schema da resposta ser ampliado.
+- O backend responde `DELETE /shortUrl/:shortCode` com 204 e o CORS libera o método DELETE (o padrão do plugin só permite GET, HEAD e POST).
 - Configurar fallback SPA na hospedagem para URLs diretas `/:shortCode`.
 - Restringir a configuração atual `CORS origin: "*"` no backend antes de produção.
-- Confirmar a exportação CSV desejada: o endpoint atual retorna datas em seu schema de listagem, mas não há endpoint dedicado ao arquivo CSV.
+- A exportação CSV depende das variáveis `CLOUDFLARE_*` configuradas no backend.
 
 ### Preparação para a API
 
-O cliente API, `VITE_BACKEND_URL` e React Router já estão implementados. Próximos passos: corrigir a omissão de `accessCount`, testar os fluxos com PostgreSQL disponível, restringir CORS e decidir se CSV permanece no browser ou migra para endpoint próprio.
+O cliente API, `VITE_BACKEND_URL` e React Router já estão implementados. Próximos passos: corrigir a omissão de `accessCount`, testar os fluxos com PostgreSQL disponível, restringir CORS antes do deploy.

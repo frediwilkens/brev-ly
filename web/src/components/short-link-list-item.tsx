@@ -16,15 +16,37 @@ export function ShortLinkListItem({ link, onDelete, isDeleting }: ShortLinkListI
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
-    await navigator.clipboard.writeText(
-      `${env.VITE_FRONTEND_URL}/${encodeURIComponent(link.shortCode)}`,
-    );
+    const url = `${env.VITE_FRONTEND_URL}/${encodeURIComponent(link.shortCode)}`;
+
+    try {
+      await navigator.clipboard.writeText(url);
+    } catch {
+      // navigator.clipboard só existe em contexto seguro (HTTPS/localhost).
+      const textarea = document.createElement("textarea");
+      textarea.value = url;
+      textarea.style.position = "fixed";
+      textarea.style.opacity = "0";
+      document.body.appendChild(textarea);
+      textarea.select();
+      const succeeded = document.execCommand("copy");
+      textarea.remove();
+      if (!succeeded) return;
+    }
+
     setCopied(true);
-    window.setTimeout(() => setCopied(false), 1800);
+    window.setTimeout(() => setCopied(false), 1500);
   };
 
   return (
     <li className="flex w-full flex-col gap-3 sm:gap-4">
+      {copied && (
+        <div
+          className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-lg bg-gray-600 px-5 py-3 text-sm font-semibold text-white shadow-lg"
+          role="status"
+        >
+          Link copiado!
+        </div>
+      )}
       <LinksDivider />
       <div className="flex w-full items-center gap-4 py-0.5 sm:gap-5">
         <div className="flex min-w-0 flex-1 flex-col gap-1">

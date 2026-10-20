@@ -18,8 +18,8 @@ const urlShortenerSchema = z.object({
     .max(32, { error: "Use no máximo 32 caracteres" })
     .transform((value) => value.toLowerCase())
     .pipe(
-      z.string().regex(/^[a-z0-9]+$/, {
-        error: "Use apenas letras minúsculas e números",
+      z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, {
+        error: "Use apenas letras minúsculas, números e hífens entre eles",
       }),
     ),
 });

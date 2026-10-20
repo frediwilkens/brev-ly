@@ -1,7 +1,6 @@
-import {
-  DownloadSimpleIcon,
-} from "@phosphor-icons/react";
-import { env } from "../config/env";
+import { CircleNotchIcon, DownloadSimpleIcon } from "@phosphor-icons/react";
+import { useState } from "react";
+import { exportShortLinks } from "../services/short-url-api";
 import type { ShortLink } from "../types/short-link";
 import { EmptyLinksState } from "./empty-links-state";
 import { ShortLinkListItem } from "./short-link-list-item";
@@ -23,29 +22,24 @@ export function MyLinks({
   onRetry,
   onDeleteLink,
 }: MyLinksProps) {
-  const handleDownloadCsv = () => {
-    const rows = [
-      ["Link encurtado", "Link original", "Acessos", "Criado em"],
-      ...links.map((link) => [
-        `${env.VITE_FRONTEND_URL}/${encodeURIComponent(link.shortCode)}`,
-        link.originalUrl,
-        String(link.accessCount),
-        link.createdAt,
-      ]),
-    ];
-    const csv = rows
-      .map((row) =>
-        row.map((value) => `"${value.replaceAll('"', '""')}"`).join(","),
-      )
-      .join("\n");
-    const url = URL.createObjectURL(
-      new Blob([csv], { type: "text/csv;charset=utf-8" }),
-    );
-    const anchor = document.createElement("a");
-    anchor.href = url;
-    anchor.download = "brevly-links.csv";
-    anchor.click();
-    window.setTimeout(() => URL.revokeObjectURL(url), 0);
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
+
+  const handleDownloadCsv = async () => {
+    setIsExporting(true);
+    setExportError(null);
+    try {
+      const reportUrl = await exportShortLinks();
+      const anchor = document.createElement("a");
+      anchor.href = reportUrl;
+      anchor.download = "brevly-links.csv";
+      anchor.rel = "noopener";
+      anchor.click();
+    } catch {
+      setExportError("Não foi possível gerar o CSV. Tente novamente.");
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   return (
@@ -57,15 +51,25 @@ export function MyLinks({
         <button
           className="flex h-8 items-center justify-center gap-1.5 rounded bg-gray-200 px-2 enabled:hover:bg-gray-300 disabled:opacity-50"
           type="button"
-          disabled={links.length === 0 || isLoading}
-          onClick={handleDownloadCsv}
+          disabled={links.length === 0 || isLoading || isExporting}
+          onClick={() => void handleDownloadCsv()}
         >
-          <DownloadSimpleIcon size={16} aria-hidden="true" />
+          {isExporting ? (
+            <CircleNotchIcon className="animate-spin" size={16} aria-hidden="true" />
+          ) : (
+            <DownloadSimpleIcon size={16} aria-hidden="true" />
+          )}
           <span className="text-xs font-semibold leading-4 text-gray-500">
             Baixar CSV
           </span>
         </button>
       </header>
+
+      {exportError && (
+        <p className="text-sm text-danger" role="alert">
+          {exportError}
+        </p>
+      )}
 
       {loadError ? (
         <div className="flex flex-col items-start gap-3" role="alert">
@@ -85,16 +89,18 @@ export function MyLinks({
       ) : links.length === 0 ? (
         <EmptyLinksState />
       ) : (
-        <ul className="flex w-full flex-col gap-3 sm:gap-4">
-          {links.map((link) => (
-            <ShortLinkListItem
-              key={link.id}
-              link={link}
-              onDelete={onDeleteLink}
-              isDeleting={deletingShortCode === link.shortCode}
-            />
-          ))}
-        </ul>
+        <div className="max-h-64 w-full overflow-y-auto overscroll-contain">
+          <ul className="flex w-full flex-col gap-3 sm:gap-4">
+            {links.map((link) => (
+              <ShortLinkListItem
+                key={link.id}
+                link={link}
+                onDelete={onDeleteLink}
+                isDeleting={deletingShortCode === link.shortCode}
+              />
+            ))}
+          </ul>
+        </div>
       )}
     </section>
   );

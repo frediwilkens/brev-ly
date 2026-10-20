@@ -12,7 +12,7 @@ export function ShortLinkPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const loadShortLink = useCallback(async (signal?: AbortSignal) => {
-    if (!/^[a-z0-9]{1,32}$/.test(shortCode)) {
+    if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(shortCode) || shortCode.length > 32) {
       setIsLoading(false);
       setShortLink(null);
       setError(new ApiError("Link não encontrado", 404));
