@@ -1,10 +1,14 @@
-import { UrlShortener } from "./components/url-shortener";
+import { Route, Routes } from "react-router-dom";
+import { HomePage } from "./pages/home-page";
+import { NotFoundPage } from "./pages/not-found-page";
+import { ShortLinkPage } from "./pages/short-link-page";
 
 export function App() {
   return (
-    <main className="bg-gray-200 h-dvh flex flex-col items-center justify-center">
-      <UrlShortener />
-    </main>
-  )
+    <Routes>
+      <Route path="/" element={<HomePage />} />
+      <Route path="/:shortCode" element={<ShortLinkPage />} />
+      <Route path="*" element={<NotFoundPage />} />
+    </Routes>
+  );
 }
-

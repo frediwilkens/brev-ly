@@ -6,9 +6,10 @@ import { schemas } from "@/infra/db/schemas";
 const deleteShortUrlInput = z.object({
   shortCode: z
     .string()
+    .max(32)
     .regex(
-      /^[a-z0-9]+$/,
-      "Short code must contain only lowercase letters and numbers"
+      /^[a-z0-9]+(?:-[a-z0-9]+)*$/,
+      "Short code must contain only lowercase letters, numbers and single hyphens between them"
     ),
 });
 

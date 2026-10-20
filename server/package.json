@@ -1,47 +1,53 @@
 {
-  "name": "brev-ly-server",
-  "version": "1.0.0",
-  "description": "brev-ly-server",
-  "main": "index.js",
-  "scripts": {
-    "dev": "tsx watch --env-file .env ./src/infra/http/server.ts",
-    "test": "dotenv -e .env.test -- vitest run",
-    "test:watch": "dotenv -e .env.test -- vitest",
-    "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate",
-    "db:studio": "drizzle-kit studio"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "devEngines": {
-    "packageManager": {
-      "name": "pnpm",
-      "version": "11.24.0",
-      "onFail": "download"
-    }
-  },
-  "packageManager": "pnpm@11.24.0",
-  "type": "module",
-  "devDependencies": {
-    "@biomejs/biome": "^2.5.10",
-    "@types/node": "^26.3.0",
-    "dotenv-cli": "^11.0.0",
-    "drizzle-kit": "^0.31.10",
-    "tsx": "^4.23.12",
-    "typescript": "^7.0.2",
-    "vite-tsconfig-paths": "^6.1.1",
-    "vitest": "^4.1.11"
-  },
-  "dependencies": {
-    "@fastify/cors": "^11.3.0",
-    "@fastify/swagger": "^9.8.1",
-    "@fastify/swagger-ui": "^6.1.1",
-    "drizzle-orm": "^0.45.2",
-    "fastify": "^5.12.1",
-    "fastify-type-provider-zod": "^7.0.0",
-    "postgres": "^3.4.9",
-    "uuidv7": "^1.2.1",
-    "zod": "^4.4.3"
-  }
+	"name": "brev-ly-server",
+	"version": "1.0.0",
+	"description": "brev-ly-server",
+	"main": "index.js",
+	"scripts": {
+		"dev": "tsx watch --env-file .env ./src/infra/http/server.ts",
+		"build": "tsup-node",
+		"start": "node dist/infra/http/server.js",
+		"test": "dotenv -e .env.test -- vitest run",
+		"test:watch": "dotenv -e .env.test -- vitest",
+		"db:generate": "drizzle-kit generate",
+		"db:migrate": "drizzle-kit migrate",
+		"db:studio": "drizzle-kit studio"
+	},
+	"keywords": [],
+	"author": "",
+	"license": "ISC",
+	"devEngines": {
+		"packageManager": {
+			"name": "pnpm",
+			"version": "11.24.0",
+			"onFail": "download"
+		}
+	},
+	"packageManager": "pnpm@11.24.0",
+	"type": "module",
+	"devDependencies": {
+		"@biomejs/biome": "^2.5.10",
+		"@types/node": "^26.3.0",
+		"dotenv-cli": "^11.0.0",
+		"drizzle-kit": "^0.31.10",
+		"tsup": "^9.0.0",
+		"typescript": "^7.0.2",
+		"vite-tsconfig-paths": "^6.1.1",
+		"vitest": "^4.1.11"
+	},
+	"dependencies": {
+		"@aws-sdk/client-s3": "^3.1151.0",
+		"@aws-sdk/lib-storage": "^3.1152.0",
+		"@fastify/cors": "^11.3.0",
+		"@fastify/swagger": "^9.8.1",
+		"@fastify/swagger-ui": "^6.1.1",
+		"csv-stringify": "^6.9.0",
+		"drizzle-orm": "^0.45.2",
+		"fastify": "^5.12.1",
+		"fastify-type-provider-zod": "^7.0.0",
+		"postgres": "^3.4.9",
+		"tsx": "^4.23.12",
+		"uuidv7": "^1.2.1",
+		"zod": "^4.4.3"
+	}
 }

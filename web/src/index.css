@@ -1,8 +1,11 @@
-@import url("https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&family=Quicksand:wght@700&display=swap");
 @import "tailwindcss";
 
 @theme {
 	--font-open-sans: "Open Sans", sans-serif;
+	--font-quicksand: "Quicksand", sans-serif;
+
+	--text-xxs: 0.625rem;
 
 	--color-blue-basic: #2c46b1;
 	--color-blue-dark: #2c4091;
