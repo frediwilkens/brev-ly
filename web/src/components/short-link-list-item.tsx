@@ -21,7 +21,6 @@ export function ShortLinkListItem({ link, onDelete, isDeleting }: ShortLinkListI
     try {
       await navigator.clipboard.writeText(url);
     } catch {
-      // navigator.clipboard só existe em contexto seguro (HTTPS/localhost).
       const textarea = document.createElement("textarea");
       textarea.value = url;
       textarea.style.position = "fixed";
