@@ -55,7 +55,7 @@ export async function getShortUrls(
       .from(schemas.shortUrls)
       .where(
         searchQuery
-          ? ilike(schemas.shortUrls.shortCode, `%${searchQuery}%`)
+          ? ilike(schemas.shortUrls.originalUrl, `%${searchQuery}%`)
           : undefined
       )
       .orderBy((fields) => {
@@ -76,7 +76,7 @@ export async function getShortUrls(
       .from(schemas.shortUrls)
       .where(
         searchQuery
-          ? ilike(schemas.shortUrls.shortCode, `%${searchQuery}%`)
+          ? ilike(schemas.shortUrls.originalUrl, `%${searchQuery}%`)
           : undefined
       ),
   ]);
